@@ -1,0 +1,178 @@
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+
+public class Main {
+    private static final int FRAME_WIDTH = 720;
+    private static final int FRAME_HEIGHT = 480;
+    private static final int PADDLE_WIDTH = 20;
+    private static final int PADDLE_HEIGHT = 100;
+    private static final int BALL_SIZE = 20;
+    private static final int BALL_SPEED = 3;
+
+    private static JFrame frame;
+    private static JPanel leftPaddle;
+    private static JPanel rightPaddle;
+    private static JPanel ball;
+
+    private static int ballX;
+    private static int ballY;
+    private static int ballXSpeed;
+    private static int ballYSpeed;
+
+    private static boolean isMovingUpLeft;
+    private static boolean isMovingDownLeft;
+    private static boolean isMovingUpRight;
+    private static boolean isMovingDownRight;
+
+    public static void main(String[] args) {
+        createGameWindow();
+        initializeObjects();
+        startGameLoop();
+    }
+
+    private static void createGameWindow() {
+        frame = new JFrame();
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setSize(FRAME_WIDTH, FRAME_HEIGHT);
+        frame.getContentPane().setBackground(Color.BLACK);
+        frame.setLayout(null);
+        frame.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+                handleKeyPress(e);
+            }
+
+            @Override
+            public void keyReleased(KeyEvent e) {
+                handleKeyRelease(e);
+            }
+        });
+        frame.setFocusable(true);
+        frame.requestFocus();
+        frame.setVisible(true);
+    }
+
+    private static void initializeObjects() {
+        leftPaddle = createPaddle(50);
+        rightPaddle = createPaddle(frame.getWidth() - PADDLE_WIDTH - 50);
+
+        ballX = (frame.getWidth() - BALL_SIZE) / 2;
+        ballY = (frame.getHeight() - BALL_SIZE) / 2;
+        ballXSpeed = BALL_SPEED;
+        ballYSpeed = BALL_SPEED;
+
+        ball = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                g.setColor(Color.RED);
+                g.fillOval(0, 0, BALL_SIZE, BALL_SIZE);
+            }
+        };
+        ball.setOpaque(false);
+        ball.setBounds(ballX, ballY, BALL_SIZE, BALL_SIZE);
+        frame.add(ball);
+        frame.add(leftPaddle);
+        frame.add(rightPaddle);
+    }
+
+    private static JPanel createPaddle(int x) {
+        JPanel paddle = new JPanel();
+        paddle.setBounds(x, (frame.getHeight() - PADDLE_HEIGHT) / 2, PADDLE_WIDTH, PADDLE_HEIGHT);
+        paddle.setBackground(Color.WHITE);
+        return paddle;
+    }
+
+    private static void startGameLoop() {
+        Timer timer = new Timer(10, new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                updateBall();
+                updatePaddles();
+                checkCollision();
+                frame.repaint();
+            }
+        });
+        timer.start();
+    }
+
+    private static void updateBall() {
+        ballX += ballXSpeed;
+        ballY += ballYSpeed;
+        ball.setBounds(ballX, ballY, BALL_SIZE, BALL_SIZE);
+    }
+
+    private static void updatePaddles() {
+        if (isMovingUpLeft && leftPaddle.getY() > 0) {
+            leftPaddle.setLocation(leftPaddle.getX(), leftPaddle.getY() - 5);
+        }
+        if (isMovingDownLeft && leftPaddle.getY() + leftPaddle.getHeight() < frame.getHeight()) {
+            leftPaddle.setLocation(leftPaddle.getX(), leftPaddle.getY() + 5);
+        }
+
+        if (isMovingUpRight && rightPaddle.getY() > 0) {
+            rightPaddle.setLocation(rightPaddle.getX(), rightPaddle.getY() - 5);
+        }
+        if (isMovingDownRight && rightPaddle.getY() + rightPaddle.getHeight() < frame.getHeight()) {
+            rightPaddle.setLocation(rightPaddle.getX(), rightPaddle.getY() + 5);
+        }
+    }
+
+    private static void checkCollision() {
+        // Check collision with top and bottom walls
+        if (ballY <= 0 || ballY >= frame.getHeight() - BALL_SIZE) {
+            ballYSpeed *= -1;
+        }
+
+        // Check collision with paddles
+        if (ball.getBounds().intersects(leftPaddle.getBounds()) || ball.getBounds().intersects(rightPaddle.getBounds())) {
+            ballXSpeed *= -1;
+        }
+
+        // Check if ball passes paddles
+        if (ballX <= leftPaddle.getX() - BALL_SIZE || ballX >= rightPaddle.getX() + PADDLE_WIDTH) {
+            resetGame();
+        }
+    }
+
+    private static void resetGame() {
+        ballX = (frame.getWidth() - BALL_SIZE) / 2;
+        ballY = (frame.getHeight() - BALL_SIZE) / 2;
+        ballXSpeed = BALL_SPEED;
+        ballYSpeed = BALL_SPEED;
+    }
+
+    private static void handleKeyPress(KeyEvent e) {
+        if (e.getKeyCode() == KeyEvent.VK_W) {
+            isMovingUpLeft = true;
+        }
+        if (e.getKeyCode() == KeyEvent.VK_S) {
+            isMovingDownLeft = true;
+        }
+        if (e.getKeyCode() == KeyEvent.VK_UP) {
+            isMovingUpRight = true;
+        }
+        if (e.getKeyCode() == KeyEvent.VK_DOWN) {
+            isMovingDownRight = true;
+        }
+    }
+
+    private static void handleKeyRelease(KeyEvent e) {
+        if (e.getKeyCode() == KeyEvent.VK_W) {
+            isMovingUpLeft = false;
+        }
+        if (e.getKeyCode() == KeyEvent.VK_S) {
+        }
+            isMovingDownLeft = false;
+        if (e.getKeyCode() == KeyEvent.VK_UP) {
+            isMovingUpRight = false;
+        }
+        if (e.getKeyCode() == KeyEvent.VK_DOWN) {
+            isMovingDownRight = false;
+        }
+    }
+}
